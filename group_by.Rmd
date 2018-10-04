@@ -73,7 +73,7 @@ weather_df %>%
   mutate(mean = mean(tmax, na.rm = T))
 ```
 
-normal ggplot
+## now let's plot normal ggplot
 
 ```{r}
 weather_df %>%
@@ -112,3 +112,33 @@ weather_df %>%
   spread(key = name, value = mean_tmax)
 ```
 
+doing some centralization
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(mean_tmax = mean(tmax, na.rm = T), 
+         centered_tmax = tmax - mean_tmax) %>% 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) +
+  geom_point()
+```
+
+## window funtions
+
+use ranks to see the coldest day in each month
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(tmax_rank = min_rank(tmax)) %>% 
+  filter(tmax_rank < 2)
+```
+
+reverse the result
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(tmax_rank = min_rank(desc(tmax))) %>% 
+  filter(tmax_rank < 2)
+```

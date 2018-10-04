@@ -3,6 +3,8 @@ group\_by
 Guojing Wu
 
 -   [start grouping](#start-grouping)
+-   [now let's plot normal ggplot](#now-lets-plot-normal-ggplot)
+-   [window funtions](#window-funtions)
 
 data import
 
@@ -139,7 +141,8 @@ weather_df %>%
     ## 10 CentralPark_NY USW00094728 2017-01-10 2017-01-01     0   7.8  -6    5.98
     ## # ... with 1,085 more rows
 
-normal ggplot
+now let's plot normal ggplot
+----------------------------
 
 ``` r
 weather_df %>%
@@ -198,3 +201,71 @@ weather_df %>%
     ## 10 2017-10-01          21.8        30.3       8.31  
     ## 11 2017-11-01          12.3        28.4       1.38  
     ## 12 2017-12-01           4.47       26.5       2.21
+
+doing some centralization
+
+``` r
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(mean_tmax = mean(tmax, na.rm = T), 
+         centered_tmax = tmax - mean_tmax) %>% 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) +
+  geom_point()
+```
+
+    ## Warning: Removed 3 rows containing missing values (geom_point).
+
+<img src="group_by_files/figure-markdown_github/unnamed-chunk-7-1.png" width="90%" />
+
+window funtions
+---------------
+
+use ranks to see the coldest day in each month
+
+``` r
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(tmax_rank = min_rank(tmax)) %>% 
+  filter(tmax_rank < 2)
+```
+
+    ## # A tibble: 42 x 8
+    ## # Groups:   name, month [36]
+    ##    name        id        date       month       prcp  tmax  tmin tmax_rank
+    ##    <chr>       <chr>     <date>     <date>     <dbl> <dbl> <dbl>     <int>
+    ##  1 CentralPar… USW00094… 2017-01-09 2017-01-01     0  -4.9  -9.9         1
+    ##  2 CentralPar… USW00094… 2017-02-10 2017-02-01     0   0    -7.1         1
+    ##  3 CentralPar… USW00094… 2017-03-15 2017-03-01     0  -3.2  -6.6         1
+    ##  4 CentralPar… USW00094… 2017-04-01 2017-04-01     0   8.9   2.8         1
+    ##  5 CentralPar… USW00094… 2017-05-13 2017-05-01   409  11.7   7.2         1
+    ##  6 CentralPar… USW00094… 2017-06-06 2017-06-01    15  14.4  11.1         1
+    ##  7 CentralPar… USW00094… 2017-07-25 2017-07-01     0  21.7  16.7         1
+    ##  8 CentralPar… USW00094… 2017-08-29 2017-08-01    74  20    16.1         1
+    ##  9 CentralPar… USW00094… 2017-09-30 2017-09-01     0  18.9  12.2         1
+    ## 10 CentralPar… USW00094… 2017-10-31 2017-10-01     0  13.9   7.2         1
+    ## # ... with 32 more rows
+
+reverse the result
+
+``` r
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(tmax_rank = min_rank(desc(tmax))) %>% 
+  filter(tmax_rank < 2)
+```
+
+    ## # A tibble: 75 x 8
+    ## # Groups:   name, month [36]
+    ##    name        id        date       month       prcp  tmax  tmin tmax_rank
+    ##    <chr>       <chr>     <date>     <date>     <dbl> <dbl> <dbl>     <int>
+    ##  1 CentralPar… USW00094… 2017-01-12 2017-01-01    13  18.9   8.3         1
+    ##  2 CentralPar… USW00094… 2017-02-24 2017-02-01     0  21.1  14.4         1
+    ##  3 CentralPar… USW00094… 2017-03-01 2017-03-01    30  21.1  12.2         1
+    ##  4 CentralPar… USW00094… 2017-04-16 2017-04-01     0  30.6  15           1
+    ##  5 CentralPar… USW00094… 2017-05-18 2017-05-01     0  33.3  23.9         1
+    ##  6 CentralPar… USW00094… 2017-06-13 2017-06-01     0  34.4  25           1
+    ##  7 CentralPar… USW00094… 2017-07-20 2017-07-01     3  34.4  25           1
+    ##  8 CentralPar… USW00094… 2017-08-01 2017-08-01     0  33.3  21.7         1
+    ##  9 CentralPar… USW00094… 2017-09-24 2017-09-01     0  32.8  20.6         1
+    ## 10 CentralPar… USW00094… 2017-10-05 2017-10-01     0  28.3  18.3         1
+    ## # ... with 65 more rows
