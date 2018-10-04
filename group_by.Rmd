@@ -142,3 +142,21 @@ weather_df %>%
   mutate(tmax_rank = min_rank(desc(tmax))) %>% 
   filter(tmax_rank < 2)
 ```
+
+using lag
+
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  mutate(lag = lag(tmax))
+```
+
+## how heat is this?
+
+```{r}
+weather_df %>%
+  group_by(name) %>%
+  mutate(one_day_change = tmax - lag(tmax)) %>% 
+  summarize(sd_one_day_change = sd(one_day_change, na.rm = T))
+```
+

@@ -5,6 +5,7 @@ Guojing Wu
 -   [start grouping](#start-grouping)
 -   [now let's plot normal ggplot](#now-lets-plot-normal-ggplot)
 -   [window funtions](#window-funtions)
+-   [how heat is this?](#how-heat-is-this)
 
 data import
 
@@ -269,3 +270,44 @@ weather_df %>%
     ##  9 CentralPar… USW00094… 2017-09-24 2017-09-01     0  32.8  20.6         1
     ## 10 CentralPar… USW00094… 2017-10-05 2017-10-01     0  28.3  18.3         1
     ## # ... with 65 more rows
+
+using lag
+
+``` r
+weather_df %>%
+  group_by(name) %>%
+  mutate(lag = lag(tmax))
+```
+
+    ## # A tibble: 1,095 x 8
+    ## # Groups:   name [3]
+    ##    name           id          date       month       prcp  tmax  tmin   lag
+    ##    <chr>          <chr>       <date>     <date>     <dbl> <dbl> <dbl> <dbl>
+    ##  1 CentralPark_NY USW00094728 2017-01-01 2017-01-01     0   8.9   4.4  NA  
+    ##  2 CentralPark_NY USW00094728 2017-01-02 2017-01-01    53   5     2.8   8.9
+    ##  3 CentralPark_NY USW00094728 2017-01-03 2017-01-01   147   6.1   3.9   5  
+    ##  4 CentralPark_NY USW00094728 2017-01-04 2017-01-01     0  11.1   1.1   6.1
+    ##  5 CentralPark_NY USW00094728 2017-01-05 2017-01-01     0   1.1  -2.7  11.1
+    ##  6 CentralPark_NY USW00094728 2017-01-06 2017-01-01    13   0.6  -3.8   1.1
+    ##  7 CentralPark_NY USW00094728 2017-01-07 2017-01-01    81  -3.2  -6.6   0.6
+    ##  8 CentralPark_NY USW00094728 2017-01-08 2017-01-01     0  -3.8  -8.8  -3.2
+    ##  9 CentralPark_NY USW00094728 2017-01-09 2017-01-01     0  -4.9  -9.9  -3.8
+    ## 10 CentralPark_NY USW00094728 2017-01-10 2017-01-01     0   7.8  -6    -4.9
+    ## # ... with 1,085 more rows
+
+how heat is this?
+-----------------
+
+``` r
+weather_df %>%
+  group_by(name) %>%
+  mutate(one_day_change = tmax - lag(tmax)) %>% 
+  summarize(sd_one_day_change = sd(one_day_change, na.rm = T))
+```
+
+    ## # A tibble: 3 x 2
+    ##   name           sd_one_day_change
+    ##   <chr>                      <dbl>
+    ## 1 CentralPark_NY              4.45
+    ## 2 Waikiki_HA                  1.23
+    ## 3 Waterhole_WA                3.13
