@@ -1,0 +1,114 @@
+---
+title: "group_by"
+output:
+  github_document:
+    toc: true
+author: Guojing Wu
+data: 2018-10-04
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(rnoaa)
+library(ggridges)
+library(patchwork)
+knitr::opts_chunk$set( # default setting
+  echo = TRUE, 
+  fig.width = 6, 
+  fig.asp = 0.6, 
+  out.width = "90%")
+devtools::install_github("thomasp85/patchwork")
+theme_set(theme_bw() + theme(legend.position = "bottom"))
+```
+
+data import
+
+```{r data import, cache=TRUE}
+weather_df = 
+  rnoaa::meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                      var = c("PRCP", "TMIN", "TMAX"), 
+                      date_min = "2017-01-01",
+                      date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10,
+    month = lubridate::floor_date(date, unit = "month")) %>%
+  select(name, id, date, month, everything())
+```
+
+## start grouping
+
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  ungroup()
+```
+
+doing some summarize
+
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarize(number = n())
+
+weather_df %>% 
+  count(name, month)
+```
+
+Compute multiple summaries within each group, the difference between summarize and mutate is that when you do group_by, summarize is gonna collapse all the observations, but mutate is gonna show all the observations and simply add another column.
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(number = n(),
+            num_na = sum(is.na(tmax)), # count missing data
+            mean_tmax = mean(tmax, na.rm = T), 
+            sd_tmin = sd(tmin, na.rm = T))
+
+weather_df %>%
+  group_by(name, month) %>%
+  mutate(mean = mean(tmax, na.rm = T))
+```
+
+normal ggplot
+
+```{r}
+weather_df %>%
+  group_by(name, month) %>%
+  summarize(number = n(),
+            num_na = sum(is.na(tmax)), # count missing data
+            mean_tmax = mean(tmax, na.rm = T), 
+            sd_tmin = sd(tmin, na.rm = T)) %>% 
+  ggplot(aes(x = month, y = mean_tmax, color = name)) +
+  geom_point()
+
+```
+
+ggplot using different dataset
+
+```{r}
+month_df = 
+  weather_df %>%
+  group_by(name, month) %>%
+  summarize(number = n(),
+            num_na = sum(is.na(tmax)), # count missing data
+            mean_tmax = mean(tmax, na.rm = T), 
+            sd_tmin = sd(tmin, na.rm = T))
+
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  geom_line(data = month_df, aes(x = month, y = mean_tmax, color = name))
+```
+
+Sometimes tidy date is not helpful
+
+```{r}
+weather_df %>% 
+  group_by(name, month) %>% 
+  summarise(mean_tmax = mean(tmax, na.rm = T)) %>% 
+  spread(key = name, value = mean_tmax)
+```
+
